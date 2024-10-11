@@ -3,7 +3,7 @@ const { EOL } = require('node:os');
 
 // Helper function for createAPost function
 // Replaces whitespace in a string with underscores
-const removeWhitespace = (string) => string.replace(/\s+/g, '_');
+const removeWhitespace = (string) => string.replace(' ', '_');
 
 // Helper function to check if a path exists
 const pathExists = (path) => fs.access(path)
@@ -38,6 +38,7 @@ const parsePostContent = (content) => {
     const [likesLine, likedByLine, ...postContentLines] = content.split(EOL);
     return {
         likes: parseInt(likesLine.replace('Likes: ', '').trim()),
+        //converts the string of names to a map in order to easily find them later on
         likedBy: likedByLine.replace('Liked By: ', '').split(', ').map(name => name.trim()),
         content: postContentLines.join(EOL),
     };
@@ -58,7 +59,8 @@ const updatePostLikes = (post, username) => {
     return post;
 };
 
-// Helper function to reconstruct the post content from the updated post object
+// Helper function to likePost
+// reconstructs the post content from the deconstructed post content with updated like count 
 const reconstructPostContent = (post) => {
     return `Likes: ${post.likes}${EOL}Liked By: ${post.likedBy.join(', ')}${EOL}${post.content}`;
 };
