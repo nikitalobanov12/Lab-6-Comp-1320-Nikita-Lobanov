@@ -112,14 +112,17 @@ const createAPost = (postTitle, postContent, blogName) => {
     let postPath = formatPath(blogName, postTitle);
 
     return pathExists(blogName)
-        .then(exists => {
+        .then(() => {
             if (!exists) {
                 throw new Error(`Error creating ${postTitle} under the ${blogName} blog, that blog doesn't exist`);
+                //if the blog doesn't exist, return an error 
+                return Promise.reject(new Error(`Error creating ${postTitle} under the ${blogName} blog, that blog doesn't exist`));
             }
             return pathExists(postPath);
         })
         .then(postExists => {
             if (postExists) {
+                //if the post already exists, add the unique date identifier to the end of the file name
                 postPath = postPath.replace('.txt', `_${Date.now()}.txt`);
             }
             return fs.writeFile(postPath, formatPostContent(postContent, 1, 'you'));
@@ -130,7 +133,11 @@ const createAPost = (postTitle, postContent, blogName) => {
 // Function to register a new user
 const register = (username, password) => {
     return checkUsernameExists(username)
-        .then(()=> {
+        .then(exists => {
+            if (exists) {
+                //reject the request to make a new username if that username already exists.
+                throw new Error(`Error creating new user ${username}, username already exists!`);
+            }
             return fs.appendFile('database.txt', `${username}, ${password}\n`);
         })
         .then(() => console.log('User created successfully'));
@@ -138,6 +145,7 @@ const register = (username, password) => {
 
 // Creates a directory with the name of the blogName input
 const createABlog = (blogName) => {
+    //don't need to check if the blog already exists beforehand since fs.mkdir will throw an error if the directory already exists. 
     return fs.mkdir(blogName)
         .then(() => {
             console.log(`Directory "${blogName}" created successfully.`);
