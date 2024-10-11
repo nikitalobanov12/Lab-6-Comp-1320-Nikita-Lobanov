@@ -114,12 +114,14 @@ const createAPost = (postTitle, postContent, blogName) => {
     return pathExists(blogName)
         .then(exists => {
             if (!exists) {
+                //if the blog doesn't exist, return an error 
                 return Promise.reject(new Error(`Error creating ${postTitle} under the ${blogName} blog, that blog doesn't exist`));
             }
             return pathExists(postPath);
         })
         .then(postExists => {
             if (postExists) {
+                //if the post already exists, add the unique date identifier to the end of the file name
                 postPath = postPath.replace('.txt', `_${Date.now()}.txt`);
             }
             return fs.writeFile(postPath, formatPostContent(postContent, 1, 'you'));
@@ -132,6 +134,7 @@ const register = (username, password) => {
     return checkUsernameExists(username)
         .then(exists => {
             if (exists) {
+                //reject the request to make a new username if that username already exists.
                 return Promise.reject(new Error(`Error creating new user ${username}, username already exists!`));
             }
             return fs.appendFile('database.txt', `${username}, ${password}\n`);
@@ -141,16 +144,13 @@ const register = (username, password) => {
 
 // Creates a directory with the name of the blogName input
 const createABlog = (blogName) => {
+    //don't need to check if the blog already exists beforehand since fs.mkdir will throw an error if the directory already exists. 
     return fs.mkdir(blogName)
         .then(() => {
             console.log(`Directory "${blogName}" created successfully.`);
         })
         .catch(error => {
-            if (error.code === 'EEXIST') {
-                return Promise.reject(new Error(`Error: A blog with the name "${blogName}" already exists. Please choose another name.`));
-            } else {
-                return Promise.reject(new Error(`Error creating directory: ${error.message}`));
-            }
+            return Promise.reject(new Error(`Error: A blog with the name "${blogName}" already exists. Please choose another name.`));
         });
 };
 
