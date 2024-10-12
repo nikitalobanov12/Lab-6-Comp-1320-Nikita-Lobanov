@@ -66,21 +66,11 @@ const reconstructPostContent = (post) => {
 };
 
 // Helper function for likePost
-// Verifies if a user exists and rejects the Promise if not
-const verifyUserExists = (username) => {
-    return checkUsernameExists(username).then(exists => {
-        if (!exists) {
-            return Promise.reject(new Error(`Error liking post, user with name ${username} doesn't exist.`));
-        }
-    });
-};
-
-// Helper function for likePost
 // Verifies if a post exists and rejects the Promise if not
 const verifyPostExists = (postPath) => {
     return pathExists(postPath).then(exists => {
         if (!exists) {
-            return Promise.reject(new Error(`Post at ${postPath} does not exist.`));
+            throw new Error(`Post at ${postPath} does not exist.`);
         }
     });
 };
@@ -102,7 +92,11 @@ const incrementLike = (path, username) => {
 // Adds a like to the post with the username
 const likePost = (blogName, postTitle, username) => {
     const postPath = formatPath(blogName, postTitle);
-    return verifyUserExists(username)
+    return checkUsernameExists(username).then(exists => {
+        if (!exists) {
+            throw new Error(`Error liking post, user with name ${username} doesn't exist.`);
+        }
+    })
         .then(() => verifyPostExists(postPath))
         .then(() => incrementLike(postPath, username));
 };
@@ -110,13 +104,10 @@ const likePost = (blogName, postTitle, username) => {
 // Creates a new post under the blogName directory as a txt file
 const createAPost = (postTitle, postContent, blogName) => {
     let postPath = formatPath(blogName, postTitle);
-
     return pathExists(blogName)
         .then(() => {
             if (!exists) {
                 throw new Error(`Error creating ${postTitle} under the ${blogName} blog, that blog doesn't exist`);
-                //if the blog doesn't exist, return an error 
-                return Promise.reject(new Error(`Error creating ${postTitle} under the ${blogName} blog, that blog doesn't exist`));
             }
             return pathExists(postPath);
         })
@@ -132,27 +123,23 @@ const createAPost = (postTitle, postContent, blogName) => {
 
 // Function to register a new user
 const register = (username, password) => {
-    return checkUsernameExists(username)
-        .then(exists => {
-            if (exists) {
-                //reject the request to make a new username if that username already exists.
-                throw new Error(`Error creating new user ${username}, username already exists!`);
-            }
-            return fs.appendFile('database.txt', `${username}, ${password}\n`);
-        })
-        .then(() => console.log('User created successfully'));
+    return checkUsernameExists(username).then(exists => {
+        if (exists) {
+            //reject the request to make a new username if that username already exists.
+            throw new Error(`Error creating new user ${username}, username already exists!`);
+        }
+        return fs.appendFile('database.txt', `${username}, ${password}\n`);
+    }).then(() => console.log('User created successfully'));
 };
 
 // Creates a directory with the name of the blogName input
 const createABlog = (blogName) => {
     //don't need to check if the blog already exists beforehand since fs.mkdir will throw an error if the directory already exists. 
-    return fs.mkdir(blogName)
-        .then(() => {
+    return fs.mkdir(blogName).then(() => {
             console.log(`Directory "${blogName}" created successfully.`);
         })
         .catch(error => {
-                throw new Error(`Error: A blog with the name "${blogName}" already exists. Please choose another name. ${EOL} ${error}`);
-           
+            throw new Error(`Error: A blog with the name "${blogName}" already exists. Please choose another name. ${EOL} ${error}`);
         });
 };
 
